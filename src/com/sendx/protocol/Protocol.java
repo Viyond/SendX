@@ -28,7 +28,7 @@ public class Protocol {
         DataOutputStream headerOut = new DataOutputStream(headerBuf);
         headerOut.write(MAGIC);
         byte[] nameBytes = fileName.getBytes(StandardCharsets.UTF_8);
-        headerOut.write(nameBytes.length);
+        headerOut.writeInt(nameBytes.length);
         headerOut.write(nameBytes);
         headerOut.writeLong(fileSize);
         headerOut.write(sha256);
