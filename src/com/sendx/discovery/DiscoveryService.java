@@ -136,7 +136,7 @@ public class DiscoveryService {
                         existing.updateTcpPort(remotePort);
                     }
                 }else {
-                    NodeInfo newNode = new NodeInfo(remoteId, remoteName, packet.getAddress(), remotePort);
+                    NodeInfo newNode = new NodeInfo(remoteId, remoteName, packet.getAddress(), remotePort, false);
                     nodes.put(remoteId, newNode);
                 }
             }catch (IOException e){
