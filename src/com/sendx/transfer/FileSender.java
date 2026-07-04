@@ -40,7 +40,6 @@ public class FileSender {
         }
 
         try (Socket socket = new Socket()) {
-            socket.bind(new InetSocketAddress(localAddress, 0));
             socket.connect(new InetSocketAddress(target.getAddress(), target.getTcpPort()), 5000);
             socket.setSendBufferSize(256 * 1024);
             socket.setTcpNoDelay(false);

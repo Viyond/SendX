@@ -86,6 +86,13 @@ public class DiscoveryService {
         return null;
     }
 
+    public void addManualNode(InetAddress address, int port){
+        String id = "manual-" + address.getHostAddress() + ":" + port;
+        String name = address.getHostName();
+        NodeInfo node = new NodeInfo(id, name, address, port, true);
+        nodes.put(id, node);
+    }
+
     private void heartbeatLoop() {
         while (running){
             try{
@@ -125,6 +132,9 @@ public class DiscoveryService {
                 NodeInfo existing = nodes.get(remoteId);
                 if (existing != null){
                     existing.updateLastSeen();
+                    if (existing.getTcpPort() != remotePort){
+                        existing.updateTcpPort(remotePort);
+                    }
                 }else {
                     NodeInfo newNode = new NodeInfo(remoteId, remoteName, packet.getAddress(), remotePort);
                     nodes.put(remoteId, newNode);
@@ -156,7 +166,7 @@ public class DiscoveryService {
                 continue;
             }
             String name = ni.getName();
-            if (!name.startsWith("en") && !name.startsWith("eth")){
+            if (!name.startsWith("en") && !name.startsWith("eth") && !name.startsWith("bridge")){
                 continue;
             }
             for (InterfaceAddress ifAddr : ni.getInterfaceAddresses()){

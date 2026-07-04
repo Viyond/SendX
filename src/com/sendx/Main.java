@@ -89,6 +89,7 @@ public class Main {
             switch (cmd) {
                 case "list", "ls" -> listNodes(discovery);
                 case "send" -> handleSend(parts, discovery, sender);
+                case "connect" -> handleConnect(parts, discovery);
                 case "help", "?" -> printHelp();
                 case "exit", "quit", "q" -> {
                     System.out.println("  Shutting down...");
@@ -155,10 +156,32 @@ public class Main {
         sender.send(target, file);
     }
 
+    private static void handleConnect(String[] parts, DiscoveryService discovery){
+        if (parts.length < 2){
+            System.out.println("  Usage: connect <ip:port>");
+            return;
+        }
+        String target = parts[1];
+        String[] hostPort = target.split(":");
+        if (hostPort.length != 2){
+            System.out.println("  Invalid format. Use: connect <ip:port>");
+            return;
+        }
+        try{
+            InetAddress address = InetAddress.getByName(hostPort[0]);
+            int port = Integer.parseInt(hostPort[1]);
+            discovery.addManualNode(address, port);
+            System.out.println("  Added node:" + hostPort[0] + ":" + port);
+        }catch (Exception e){
+            System.out.println("  Error: " + e.getMessage());
+        }
+    }
+
     private static void printHelp() {
         System.out.println("  Commands:");
         System.out.println("    list                - Show online nodes");
         System.out.println("    send <#> <path>     - Send file to node #");
+        System.out.println("    connect <ip:port>   - Manually add a peer node");
         System.out.println("    help                - Show this help");
         System.out.println("    exit                - Quit SendX");
     }
