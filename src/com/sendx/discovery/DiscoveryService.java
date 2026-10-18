@@ -142,6 +142,16 @@ public class DiscoveryService {
                 }else {
                     NodeInfo newNode = new NodeInfo(remoteId, remoteName, packet.getAddress(), remotePort, false);
                     nodes.put(remoteId, newNode);
+
+                    //reply individually to make sure the opposite side can discover myself
+                    try{
+                        String response = PREFIX + nodeId + "|" + nodeName + "|" + tcpPort;
+                        byte[] respData = response.getBytes(StandardCharsets.UTF_8);
+                        DatagramPacket respPacket = new DatagramPacket(respData, respData.length, packet.getAddress(), DISCOVERY_PORT);
+                        sendSocket.send(respPacket);
+                    }catch (IOException e){
+                        e.printStackTrace();
+                    }
                 }
             }catch (IOException e){
                 if (running){
