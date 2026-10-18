@@ -23,7 +23,8 @@ public class DiscoveryService {
     private volatile int tcpPort;
     private final ConcurrentHashMap<String, NodeInfo> nodes = new ConcurrentHashMap<>();
 
-    private DatagramSocket socket;
+    private DatagramSocket receiveSocket; //bind 0.0.0.0:9876, receive broadcast
+    private DatagramSocket sendSocket; //bind localAddress:0, send broadcast
     private InetAddress broadcastAddress;
     private InetAddress localAddress;
     private volatile boolean running;
@@ -43,14 +44,17 @@ public class DiscoveryService {
     }
 
     public void start() throws IOException {
-        //Find LAN interface and its broadcast address
-        resolveNetworkInfo();
+        //receive socket
+        receiveSocket = new DatagramSocket(null);
+        receiveSocket.setReuseAddress(true);
+        receiveSocket.setBroadcast(true);
+        receiveSocket.bind(new InetSocketAddress(DISCOVERY_PORT));
 
-        //Single socket: bound to LAN IP, listens on discovery port
-        socket = new DatagramSocket(null);
-        socket.setReuseAddress(true);
-        socket.setBroadcast(true);
-        socket.bind(new InetSocketAddress(DISCOVERY_PORT));
+        //send socket
+        sendSocket = new DatagramSocket(null);
+        sendSocket.setReuseAddress(true);
+        sendSocket.setBroadcast(true);
+        sendSocket.bind(new InetSocketAddress(localAddress, 0));
 
         running = true;
 
@@ -69,8 +73,11 @@ public class DiscoveryService {
 
     public void stop() {
         running = false;
-        if (socket != null && !socket.isClosed()){
-            socket.close();
+        if (receiveSocket != null && !receiveSocket.isClosed()){
+            receiveSocket.close();
+        }
+        if (sendSocket != null && !sendSocket.isClosed()){
+            sendSocket.close();
         }
     }
 
@@ -99,7 +106,7 @@ public class DiscoveryService {
                 String message = PREFIX + nodeId + "|" + nodeName + "|" + tcpPort;
                 byte[] data = message.getBytes(StandardCharsets.UTF_8);
                 DatagramPacket packet = new DatagramPacket(data, data.length, broadcastAddress, DISCOVERY_PORT);
-                socket.send(packet);
+                sendSocket.send(packet);
                 Thread.sleep(HEARTBEAT_INTERVAL_MS);
             }catch (InterruptedException e){
                 break;
@@ -116,7 +123,7 @@ public class DiscoveryService {
         while (running){
             try{
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-                socket.receive(packet);
+                receiveSocket.receive(packet);
                 String message = new String(packet.getData(), 0, packet.getLength(), StandardCharsets.UTF_8);
                 if (!message.startsWith(PREFIX)) continue;
 
@@ -131,10 +138,7 @@ public class DiscoveryService {
 
                 NodeInfo existing = nodes.get(remoteId);
                 if (existing != null){
-                    existing.updateLastSeen();
-                    if (existing.getTcpPort() != remotePort){
-                        existing.updateTcpPort(remotePort);
-                    }
+                    existing.update(packet.getAddress(), remotePort);
                 }else {
                     NodeInfo newNode = new NodeInfo(remoteId, remoteName, packet.getAddress(), remotePort, false);
                     nodes.put(remoteId, newNode);
@@ -158,7 +162,7 @@ public class DiscoveryService {
         }
     }
 
-    private void resolveNetworkInfo() throws SocketException{
+    public void resolveNetworkInfo() throws SocketException{
         Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
         while (interfaces.hasMoreElements()){
             NetworkInterface ni = interfaces.nextElement();

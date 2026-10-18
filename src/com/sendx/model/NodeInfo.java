@@ -6,7 +6,7 @@ public class NodeInfo {
 
     private final String id;
     private final String name;
-    private final InetAddress address;
+    private volatile InetAddress address;
     private volatile int tcpPort;
     private volatile long lastSeen;
     private final boolean manual;
@@ -18,6 +18,12 @@ public class NodeInfo {
         this.tcpPort = tcpPort;
         this.lastSeen = System.currentTimeMillis();
         this.manual = manual;
+    }
+
+    public void update(InetAddress address, int tcpPort){
+        this.address = address;
+        this.tcpPort = tcpPort;
+        this.lastSeen = System.currentTimeMillis();
     }
 
     public String getId() {

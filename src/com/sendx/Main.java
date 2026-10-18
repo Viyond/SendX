@@ -47,7 +47,7 @@ public class Main {
         //Start discovery first to resolve LAN address
         DiscoveryService discovery = new DiscoveryService(nodeId, nodeName, 0);
         try{
-            discovery.start();
+            discovery.resolveNetworkInfo();
         }catch (IOException e){
             System.err.println("Failed to start discovery: " + e.getMessage());
             System.exit(1);
@@ -64,6 +64,12 @@ public class Main {
         int actualPort = receiver.getLocalPort();
         // Update discovery to broadcast the actual TCP port
         discovery.setTcpPort(actualPort);
+        try{
+            discovery.start();
+        }catch (Exception e){
+            System.err.println("Failed to start discovery: " + e.getMessage());
+            System.exit(1);
+        }
 
         System.out.println("=== SendX - LAN File Transfer (AES-256 Encrypted) ===");
         System.out.println("  Node: " + nodeName + " (id: " + nodeId + ")");
