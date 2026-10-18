@@ -95,7 +95,7 @@ public class DiscoveryService {
 
     public void addManualNode(InetAddress address, int port){
         String id = "manual-" + address.getHostAddress() + ":" + port;
-        String name = address.getHostName();
+        String name = address.getHostAddress();
         NodeInfo node = new NodeInfo(id, name, address, port, true);
         nodes.put(id, node);
     }
