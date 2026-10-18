@@ -149,8 +149,8 @@ public class DiscoveryService {
                         byte[] respData = response.getBytes(StandardCharsets.UTF_8);
                         DatagramPacket respPacket = new DatagramPacket(respData, respData.length, packet.getAddress(), DISCOVERY_PORT);
                         sendSocket.send(respPacket);
-                    }catch (IOException e){
-                        e.printStackTrace();
+                    }catch (IOException e){//ignore
+                        //e.printStackTrace();
                     }
                 }
             }catch (IOException e){
